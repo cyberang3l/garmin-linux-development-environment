@@ -1,0 +1,38 @@
+#!/bin/bash
+set -eu
+
+# shellcheck disable=SC1091
+source "${HOME}/.local/opt/Garmin/garmin-env"
+
+if [[ ! -d "${SDK_MANAGER_PATH}" ]]; then
+	>&2 echo "Error: Please run the sdkmanager script to configure"
+	>&2 echo "       your environment first, and then try to run the"
+	>&2 echo "       $(basename "${0}") script again."
+	exit 1
+fi
+
+if [[ ! -f "${SDK_CONFIG_PATH}" ]]; then
+	>&2 echo "Error: File ${SDK_CONFIG_PATH}"
+	>&2 echo "       was not found. Please run the Garmin sdkmanager"
+	>&2 echo "       and install at least one sdk version"
+	exit 1
+fi
+
+CURRENT_SDK_PATH="$(cat "${HOME}/.Garmin/ConnectIQ/current-sdk.cfg")"
+
+SDK_BIN="${CURRENT_SDK_PATH}/bin"
+SDK_MANAGER_BIN="${SDK_MANAGER_PATH}/bin"
+SDK_MANAGER_LIB=${SDK_MANAGER_PATH}/usr/lib/x86_64-linux-gnu/
+
+PATH="${SDK_BIN}":"${SDK_MANAGER_BIN}":${PATH}
+LD_LIBRARY_PATH="${SDK_MANAGER_LIB}"
+
+export PATH
+export LD_LIBRARY_PATH
+
+CODE=$(which code || (>&2 echo "Error: Please install visual studio code before running this script" && exit 1))
+
+>&2 echo "Will now start VSCode. Please install the VSCode Monkey C extension"
+>&2 echo "if you haven't done so yet. More details on:"
+>&2 echo "https://developer.garmin.com/connect-iq/reference-guides/visual-studio-code-extension/"
+"${CODE}" --ozone-platform=wayland "${@}"

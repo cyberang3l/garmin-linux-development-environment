@@ -1,0 +1,44 @@
+#!/bin/bash
+set -eu
+
+# shellcheck disable=SC1091
+source "${HOME}/.local/opt/Garmin/garmin-env"
+
+SDK_MANAGER_DOWNLOAD_URL=https://developer.garmin.com/downloads/connect-iq/sdk-manager/connectiq-sdk-manager-linux.zip
+SDK_MANAGER_ZIP_PATH="${GARMIN_PATH}/connectiq-sdk-manager-linux.zip"
+
+if [[ ! -e ${GARMIN_PATH} ]]; then
+	mkdir "${GARMIN_PATH}"
+fi
+
+cd "${GARMIN_PATH}"
+
+if [[ ! -e "${SDK_MANAGER_PATH}" ]]; then
+	wget "${SDK_MANAGER_DOWNLOAD_URL}" -O "${SDK_MANAGER_ZIP_PATH}"
+	unzip -o -d "${SDK_MANAGER_PATH}" "${SDK_MANAGER_ZIP_PATH}"
+fi
+
+# Download dependencies
+# Go to https://packages.ubuntu.com/ and use the "Search the contents of packages"
+# section to find the shared libraries the sdkmanager is looking for.
+packages=(
+	http://security.ubuntu.com/ubuntu/pool/main/w/webkit2gtk/libwebkit2gtk-4.0-37_2.46.4-0ubuntu0.22.04.1_amd64.deb libwebkit2gtk-4.0.so.37
+	http://security.ubuntu.com/ubuntu/pool/main/w/webkit2gtk/libwebkit2gtk-4.0-dev_2.46.4-0ubuntu0.22.04.1_amd64.deb libwebkit2gtk-4.0-dev
+	http://security.ubuntu.com/ubuntu/pool/main/w/webkit2gtk/libjavascriptcoregtk-4.0-18_2.46.4-0ubuntu0.22.04.1_amd64.deb libjavascriptcoregtk-4.0.so.18
+	http://no.archive.ubuntu.com/ubuntu/pool/main/i/icu/libicu70_70.1-2_amd64.deb libicui18n.so.70
+)
+
+for ((i = 0; i < "${#packages[@]}"; i += 2)); do
+	url="${packages[$i]}"
+	pkg="${packages[$i + 1]}"
+	pkg_dst="${SDK_MANAGER_PATH}/${pkg}.deb"
+	if [[ ! -f "${pkg_dst}" ]]; then
+		wget "${url}" -O "${pkg_dst}"
+		dpkg --vextract "${pkg_dst}" "${SDK_MANAGER_PATH}"
+	fi
+done
+
+LD_LIBRARY_PATH="${SDK_MANAGER_PATH}/usr/lib/x86_64-linux-gnu/"
+export LD_LIBRARY_PATH
+
+"${SDK_MANAGER_PATH}/bin/sdkmanager"

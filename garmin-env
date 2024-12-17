@@ -1,0 +1,3 @@
+GARMIN_PATH="${HOME}/.Garmin"
+SDK_MANAGER_PATH="${GARMIN_PATH}/connectiq-sdk-manager-linux"
+SDK_CONFIG_PATH="${GARMIN_PATH}/ConnectIQ/current-sdk.cfg"
